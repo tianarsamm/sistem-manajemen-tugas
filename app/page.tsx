@@ -1,69 +1,160 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import Link from "next/link";
+import { useState } from "react";
+import { useStore } from "@/lib/store";
+import { DOW, greeting, MON, today } from "@/lib/utils";
+import { TaskForm, TaskRow } from "@/components/tasks";
+import { TodoRow } from "@/components/todos";
+import { MeetingCard } from "@/components/meetings";
+import { Empty } from "@/components/ui";
+
+export default function DashboardPage() {
+  const { data, loaded } = useStore();
+  const [creating, setCreating] = useState(false);
+
+  if (!loaded) {
+    return <div className="panel skeleton">Memuat data…</div>;
+  }
+
+  const t = today();
+  const now = new Date();
+  const done = data.tasks.filter((x) => x.status === "COMPLETED").length;
+  const running = data.tasks.filter((x) => x.status === "TODO" || x.status === "IN_PROGRESS").length;
+
+  const todayTasks = data.tasks.filter((x) => x.due === t && x.status !== "CANCELLED");
+  const todayTodos = data.todos.filter((x) => x.due === t);
+  const todayMeetings = data.meetings
+    .filter((m) => m.date === t)
+    .sort((a, b) => a.start.localeCompare(b.start));
+
+  const deadlines = data.tasks
+    .filter((x) => x.due && x.due >= t && x.status !== "COMPLETED" && x.status !== "CANCELLED")
+    .sort((a, b) => a.due.localeCompare(b.due))
+    .slice(0, 5);
+
+  const upcoming = data.meetings
+    .filter((m) => m.date >= t)
+    .sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start))
+    .slice(0, 5);
+
+  const totalToday = todayTasks.length + todayTodos.length + todayMeetings.length;
+  const doneToday =
+    todayTasks.filter((x) => x.status === "COMPLETED").length + todayTodos.filter((x) => x.done).length;
+  const pct = totalToday ? Math.round((doneToday / totalToday) * 100) : 0;
+  const circumference = 2 * Math.PI * 35;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <>
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">{greeting(now.getHours())}</h1>
+          <p className="page-sub">Semua yang perlu kamu urus hari ini ada di satu halaman.</p>
+        </div>
+        <button type="button" className="btn btn-primary" onClick={() => setCreating(true)}>
+          Tugas baru
+        </button>
+      </div>
+
+      <section className="today">
+        <div className="ring">
+          <svg width="86" height="86" viewBox="0 0 86 86" aria-hidden="true">
+            <circle cx="43" cy="43" r="35" fill="none" stroke="var(--surface-3)" strokeWidth="7" />
+            <circle
+              cx="43" cy="43" r="35" fill="none" stroke="var(--accent)" strokeWidth="7" strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference - (circumference * pct) / 100}
+            />
+          </svg>
+          <div className="val">
+            {pct}%<span>hari ini</span>
+          </div>
+        </div>
+        <div>
+          <div className="date">
+            {DOW[now.getDay()]}, {now.getDate()} {MON[now.getMonth()]}
+          </div>
+          <p className="hint">
+            {totalToday
+              ? `${doneToday} dari ${totalToday} item hari ini sudah kelar — ${todayMeetings.length} rapat, ${todayTasks.length} tugas, ${todayTodos.length} to-do.`
+              : "Belum ada yang dijadwalkan hari ini. Tambahkan tugas atau rapat untuk mulai."}
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+      </section>
+
+      <section className="stats">
+        <div className="stat"><b>{data.tasks.length}</b><span>Total tugas</span></div>
+        <div className="stat"><b>{done}</b><span>Selesai</span></div>
+        <div className="stat"><b>{running}</b><span>Berjalan</span></div>
+        <div className="stat"><b>{data.todos.filter((x) => !x.done).length}</b><span>To-do terbuka</span></div>
+      </section>
+
+      <div className="grid2">
+        <div className="panel">
+          <div className="panel-head">
+            <h3>Tugas hari ini</h3>
+            <Link className="more" href="/tasks">Semua tugas</Link>
+          </div>
+          {todayTasks.length ? (
+            <ul className="list">
+              {todayTasks.map((t2) => <TaskRow key={t2.id} task={t2} />)}
+            </ul>
+          ) : (
+            <Empty
+              title="Tidak ada tugas jatuh tempo hari ini"
+              hint="Nikmati ruang kosongnya, atau tarik maju pekerjaan besok."
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+          )}
         </div>
-      </main>
-    </div>
+
+        <div className="panel">
+          <div className="panel-head">
+            <h3>To-do hari ini</h3>
+            <Link className="more" href="/todos">Semua to-do</Link>
+          </div>
+          {todayTodos.length ? (
+            <ul className="list">
+              {todayTodos.map((x) => <TodoRow key={x.id} todo={x} />)}
+            </ul>
+          ) : (
+            <Empty title="Belum ada to-do hari ini" hint="To-do dipakai untuk hal cepat yang tidak perlu detail." />
+          )}
+        </div>
+
+        <div className="panel">
+          <div className="panel-head">
+            <h3>Rapat hari ini</h3>
+            <Link className="more" href="/meetings">Semua rapat</Link>
+          </div>
+          {todayMeetings.length ? (
+            todayMeetings.map((m) => <MeetingCard key={m.id} meeting={m} />)
+          ) : (
+            <Empty title="Hari tanpa rapat" hint="Waktu penuh untuk kerja dalam." />
+          )}
+        </div>
+
+        <div className="panel">
+          <div className="panel-head"><h3>Tenggat terdekat</h3></div>
+          {deadlines.length ? (
+            <ul className="list">
+              {deadlines.map((x) => <TaskRow key={x.id} task={x} />)}
+            </ul>
+          ) : (
+            <Empty title="Tidak ada tenggat di depan" hint="Tugas dengan tanggal jatuh tempo akan muncul di sini." />
+          )}
+        </div>
+
+        <div className="panel">
+          <div className="panel-head"><h3>Rapat berikutnya</h3></div>
+          {upcoming.length ? (
+            upcoming.map((m) => <MeetingCard key={m.id} meeting={m} />)
+          ) : (
+            <Empty title="Belum ada rapat terjadwal" hint="Buat rapat lalu simpan tautannya sekali saja." />
+          )}
+        </div>
+      </div>
+
+      {creating ? <TaskForm task={null} onClose={() => setCreating(false)} /> : null}
+    </>
   );
 }
