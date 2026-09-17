@@ -34,7 +34,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <aside className="sidebar">
           <div className="brand">
             <span className="mark">Fokus</span>
-            <span className="sub">ruang kerja harian</span>
+            {/* <span className="sub">ruang kerja harian</span> */}
           </div>
           <nav className="nav">
             {NAV.map((item) => (

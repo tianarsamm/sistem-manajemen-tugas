@@ -52,7 +52,11 @@ export function TodoRow({ todo, onEdit }: { todo: Todo; onEdit?: (t: Todo) => vo
   );
 }
 
-export function TodoForm({ todo, onClose }: { todo: Todo; onClose: () => void }) {
+export function TodoForm({
+  todo,
+  mode = "edit",
+  onClose,
+}: { todo: Todo; mode?: "add" | "edit"; onClose: () => void }) {
   const { upsert, toast } = useStore();
   const [draft, setDraft] = useState<Todo>({ ...todo });
   const [showError, setShowError] = useState(false);
@@ -60,8 +64,8 @@ export function TodoForm({ todo, onClose }: { todo: Todo; onClose: () => void })
 
   return (
     <Modal
-      title="Ubah to-do"
-      submitLabel="Simpan perubahan"
+      title={mode === "add" ? "Tambah to-do" : "Ubah to-do"}
+      submitLabel={mode === "add" ? "Tambah to-do" : "Simpan perubahan"}
       onClose={onClose}
       onSubmit={() => {
         if (invalid) {
@@ -69,7 +73,7 @@ export function TodoForm({ todo, onClose }: { todo: Todo; onClose: () => void })
           return;
         }
         upsert("todos", { ...draft, title: draft.title.trim(), category: draft.category.trim() });
-        toast("To-do diperbarui");
+        toast(mode === "add" ? "To-do ditambahkan" : "To-do diperbarui");
         onClose();
       }}
     >

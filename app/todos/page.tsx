@@ -14,25 +14,10 @@ const FILTERS: [string, string][] = [
 ];
 
 export default function TodosPage() {
-  const { data, loaded, upsert } = useStore();
-  const [draft, setDraft] = useState("");
+  const { data, loaded } = useStore();
   const [filter, setFilter] = useState("ALL");
   const [editing, setEditing] = useState<Todo | null>(null);
-
-  function add() {
-    const title = draft.trim();
-    if (!title) return;
-    upsert("todos", {
-      id: uid("d"),
-      title,
-      done: false,
-      priority: "MEDIUM",
-      due: "",
-      category: "",
-      createdAt: new Date().toISOString(),
-    });
-    setDraft("");
-  }
+  const [adding, setAdding] = useState(false);
 
   const list = data.todos
     .filter((t) => (filter === "OPEN" ? !t.done : filter === "DONE" ? t.done : true))
@@ -48,26 +33,10 @@ export default function TodosPage() {
           <h1 className="page-title">To-Do</h1>
           <p className="page-sub">Hal kecil yang cukup ditulis, dikerjakan, lalu dicoret.</p>
         </div>
-      </div>
-
-      <form
-        className="quickadd"
-        onSubmit={(e) => {
-          e.preventDefault();
-          add();
-        }}
-      >
-        <input
-          type="text"
-          value={draft}
-          placeholder="Tulis satu hal, tekan Enter"
-          autoComplete="off"
-          onChange={(e) => setDraft(e.target.value)}
-        />
-        <button type="submit" className="btn btn-primary">
-          Tambah
+        <button type="button" className="btn btn-primary" onClick={() => setAdding(true)}>
+          Tambah to-do
         </button>
-      </form>
+      </div>
 
       <div className="toolbar">
         <div className="seg">
@@ -92,10 +61,25 @@ export default function TodosPage() {
             ))}
           </ul>
         ) : (
-          <Empty title="Daftar masih kosong" hint="Ketik di kolom atas untuk menambah item pertama." />
+          <Empty title="Daftar masih kosong" hint="Gunakan tombol Tambah to-do untuk membuat item pertama." />
         )}
       </div>
 
+      {adding ? (
+        <TodoForm
+          todo={{
+            id: uid("d"),
+            title: "",
+            done: false,
+            priority: "MEDIUM",
+            due: "",
+            category: "",
+            createdAt: new Date().toISOString(),
+          }}
+          mode="add"
+          onClose={() => setAdding(false)}
+        />
+      ) : null}
       {editing ? <TodoForm todo={editing} onClose={() => setEditing(null)} /> : null}
     </>
   );

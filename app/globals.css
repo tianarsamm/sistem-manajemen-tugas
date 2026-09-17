@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root{
+  --font-display:var(--font-body);
   --paper:#F0F3EF; --surface:#FFFFFF; --surface-2:#E7EBE5; --surface-3:#DCE2D9;
   --ink:#181D1A; --ink-2:#3C4642; --muted:#66756E; --line:#D3DACF;
   --accent:#2C6A4C; --accent-ink:#FFFFFF; --accent-soft:#DDEBE1;
@@ -23,6 +24,31 @@
   --accent:#5FBF8B; --accent-ink:#0E1712; --accent-soft:#1E3128;
   --p-low:#8A978F; --p-med:#6EA4D8; --p-high:#D9A23F; --p-urg:#E0665D;
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.28);
+}
+
+/* Primary color tints the workspace surfaces as well as controls. */
+:root{
+  --paper:color-mix(in srgb, var(--accent) 8%, #F0F3EF);
+  --surface:color-mix(in srgb, var(--accent) 5%, #FFFFFF);
+  --surface-2:color-mix(in srgb, var(--accent) 11%, #E7EBE5);
+  --surface-3:color-mix(in srgb, var(--accent) 15%, #DCE2D9);
+  --line:color-mix(in srgb, var(--accent) 18%, #D3DACF);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:color-mix(in srgb, var(--accent) 15%, #111413);
+    --surface:color-mix(in srgb, var(--accent) 13%, #191E1B);
+    --surface-2:color-mix(in srgb, var(--accent) 18%, #222825);
+    --surface-3:color-mix(in srgb, var(--accent) 22%, #2C332E);
+    --line:color-mix(in srgb, var(--accent) 26%, #2E3733);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:color-mix(in srgb, var(--accent) 15%, #111413);
+  --surface:color-mix(in srgb, var(--accent) 13%, #191E1B);
+  --surface-2:color-mix(in srgb, var(--accent) 18%, #222825);
+  --surface-3:color-mix(in srgb, var(--accent) 22%, #2C332E);
+  --line:color-mix(in srgb, var(--accent) 26%, #2E3733);
 }
 
 *{box-sizing:border-box}
@@ -180,6 +206,16 @@ label.f{display:block; font-size:12.5px; color:var(--muted); margin-bottom:5px}
 .seg{display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; background:var(--surface)}
 .seg button{border:0; background:none; padding:7px 13px; font-size:13.5px; color:var(--muted)}
 .seg button[aria-pressed="true"]{background:var(--accent-soft); color:var(--ink)}
+.color-picker{margin-top:14px; padding:12px; border:1px solid var(--line); border-radius:var(--r); background:var(--surface-2)}
+.color-picker-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
+.color-picker-head strong{font-size:14px}
+.color-picker-head span,.color-picker-actions span{font-size:11.5px; color:var(--muted)}
+.color-grid{display:grid; grid-template-columns:repeat(7,24px); gap:6px}
+.color-swatch{width:24px; height:24px; border:2px solid transparent; border-radius:50%; box-shadow:inset 0 0 0 1px rgba(24,29,26,.18); padding:0; transition:transform .12s, border-color .12s}
+.color-swatch:hover{transform:scale(1.06)}
+.color-swatch[aria-pressed="true"]{border-color:var(--ink); box-shadow:inset 0 0 0 3px var(--surface-2), 0 0 0 2px var(--ink)}
+.color-picker-actions{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px}
+.color-picker-actions .btn:disabled{cursor:default; opacity:.45}
 .cal-grid{display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); background:var(--line); gap:1px; border:1px solid var(--line); border-radius:var(--r); overflow:hidden; min-width:0}
 .cal-dow{background:var(--surface-2); padding:7px 8px; font-size:11.5px; color:var(--muted); text-align:center}
 .cal-cell{background:var(--surface); min-height:104px; padding:6px 7px}

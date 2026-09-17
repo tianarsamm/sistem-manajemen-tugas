@@ -7,8 +7,22 @@ import type { AppData, Collection, MusicItem } from "./types";
 
 const STORAGE_KEY = "fokus.v1";
 const THEME_KEY = "fokus.theme";
+const PRIMARY_COLOR_KEY = "fokus.primary-color";
+const DEFAULT_PRIMARY_COLOR = "#2C6A4C";
 
 const EMPTY: AppData = { tasks: [], todos: [], meetings: [], playlists: [], music: [] };
+
+function applyPrimaryColor(color: string) {
+  const root = document.documentElement;
+  const hex = color.replace("#", "");
+  const red = Number.parseInt(hex.slice(0, 2), 16);
+  const green = Number.parseInt(hex.slice(2, 4), 16);
+  const blue = Number.parseInt(hex.slice(4, 6), 16);
+  const luminance = (red * 299 + green * 587 + blue * 114) / 1000;
+  root.style.setProperty("--accent", color);
+  root.style.setProperty("--accent-ink", luminance > 155 ? "#181D1A" : "#FFFFFF");
+  root.style.setProperty("--accent-soft", `color-mix(in srgb, ${color} 16%, var(--surface))`);
+}
 
 type ConfirmRequest = {
   title: string;
@@ -38,6 +52,8 @@ type StoreValue = {
   stopPlayer: () => void;
   theme: string;
   setTheme: (t: string) => void;
+  primaryColor: string;
+  setPrimaryColor: (color: string) => void;
 };
 
 const StoreContext = createContext<StoreValue | null>(null);
@@ -50,6 +66,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [queue, setQueue] = useState<string[]>([]);
   const [theme, setThemeState] = useState("auto");
+  const [primaryColor, setPrimaryColorState] = useState(DEFAULT_PRIMARY_COLOR);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Muat sekali di klien supaya tidak bentrok dengan render server.
@@ -70,6 +87,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (th) {
         setThemeState(th);
         if (th !== "auto") document.documentElement.setAttribute("data-theme", th);
+      }
+      const savedPrimaryColor = window.localStorage.getItem(PRIMARY_COLOR_KEY);
+      if (savedPrimaryColor) {
+        setPrimaryColorState(savedPrimaryColor);
+        applyPrimaryColor(savedPrimaryColor);
       }
     } catch {
       // localStorage bisa diblokir; aplikasi tetap jalan dengan data kosong.
@@ -132,6 +154,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const setPrimaryColor = useCallback((color: string) => {
+    setPrimaryColorState(color);
+    applyPrimaryColor(color);
+    try {
+      window.localStorage.setItem(PRIMARY_COLOR_KEY, color);
+    } catch {
+      // abaikan
+    }
+  }, []);
+
   const play = useCallback(
     (item: MusicItem) => {
       setQueue(data.music.filter((m) => m.playlistId === item.playlistId).map((m) => m.id));
@@ -165,7 +197,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     toast, toastMessage,
     confirm: setConfirmRequest, confirmRequest, closeConfirm: () => setConfirmRequest(null),
     playing, queuePosition, play, step, stopPlayer: () => setPlayingId(null),
-    theme, setTheme,
+    theme, setTheme, primaryColor, setPrimaryColor,
   };
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
