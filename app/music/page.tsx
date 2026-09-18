@@ -7,7 +7,7 @@ import { uid, ytId } from "@/lib/utils";
 import { Empty, Modal } from "@/components/ui";
 
 export default function MusicPage() {
-  const { data, loaded, upsert, remove, confirm, toast, play } = useStore();
+  const { data, loaded, upsert, remove, confirm, toast, play, playing } = useStore();
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [url, setUrl] = useState("");
   const [urlError, setUrlError] = useState(false);
@@ -157,7 +157,12 @@ export default function MusicPage() {
                     {items.map((m) => (
                       <li key={m.id}>
                         <div className="body">
-                          <div className="ttl">{m.title}</div>
+                          <div className="ttl">
+                            {playing?.id === m.id ? (
+                              <span className="now-playing" aria-label="Sedang diputar">▶ </span>
+                            ) : null}
+                            {m.title}
+                          </div>
                           <div className="meta">
                             <span className="tag">{m.videoId}</span>
                           </div>

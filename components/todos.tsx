@@ -20,7 +20,7 @@ export function TodoRow({ todo, onEdit }: { todo: Todo; onEdit?: (t: Todo) => vo
         <div className="meta">
           <PriorityBadge value={todo.priority} />
           {todo.category ? <span className="tag">{todo.category}</span> : null}
-          <DueBadge date={todo.due} />
+          <DueBadge date={todo.due} completed={todo.done} />
         </div>
       </div>
       <div className="acts">

@@ -46,7 +46,8 @@ export function PriorityBadge({ value }: { value: Priority }) {
   );
 }
 
-export function DueBadge({ date }: { date: string }) {
+export function DueBadge({ date, completed = false }: { date: string; completed?: boolean }) {
+  if (completed) return <span className="tag">Selesai</span>;
   const info = dueInfo(date);
   if (!info) return null;
   return <span className={`tag ${info.cls}`}>{info.text}</span>;

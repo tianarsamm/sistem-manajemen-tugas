@@ -37,6 +37,7 @@ type StoreValue = {
   /** Tambah atau perbarui satu record berdasarkan id. */
   upsert: <K extends Collection>(coll: K, item: AppData[K][number]) => void;
   remove: (coll: Collection, id: string) => void;
+  replaceData: (next: AppData) => void;
   resetAll: () => void;
   toast: (message: string) => void;
   confirm: (req: NonNullable<ConfirmRequest>) => void;
@@ -137,6 +138,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     setPlayingId((cur) => (cur === id ? null : cur));
   }, []);
 
+  const replaceData = useCallback((next: AppData) => {
+    setData(next);
+    setPlayingId(null);
+    setQueue([]);
+  }, []);
+
   const resetAll = useCallback(() => {
     setData(EMPTY);
     setPlayingId(null);
@@ -193,7 +200,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value: StoreValue = {
-    data, loaded, upsert, remove, resetAll,
+    data, loaded, upsert, remove, replaceData, resetAll,
     toast, toastMessage,
     confirm: setConfirmRequest, confirmRequest, closeConfirm: () => setConfirmRequest(null),
     playing, queuePosition, play, step, stopPlayer: () => setPlayingId(null),

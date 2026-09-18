@@ -59,7 +59,7 @@ export function TaskRow({
           <span className={`status ${task.status}`}>{labelOf(STATUSES, task.status)}</span>
           <PriorityBadge value={task.priority} />
           {task.category ? <span className="tag">{task.category}</span> : null}
-          <DueBadge date={task.due} />
+          <DueBadge date={task.due} completed={isDone} />
           {progress ? (
             <span className="tag">
               {progress.done}/{progress.total} subtugas

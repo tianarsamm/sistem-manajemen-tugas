@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useStore } from "@/lib/store";
+import type { AppData } from "@/lib/types";
 
 const PRIMARY_COLORS = [
   "#000000", "#555555", "#777777", "#A6A6A6", "#BDBDBD", "#D9D9D9", "#FFFFFF",
@@ -19,9 +20,10 @@ const THEMES: [string, string][] = [
 export default function SettingsPage() {
   const {
     data, loaded, theme, setTheme, primaryColor, setPrimaryColor,
-    resetAll, confirm, toast,
+    replaceData, resetAll, confirm, toast,
   } = useStore();
   const [draftPrimaryColor, setDraftPrimaryColor] = useState<string | null>(null);
+  const importInput = useRef<HTMLInputElement>(null);
   const selectedPrimaryColor = draftPrimaryColor ?? primaryColor;
   const total =
     data.tasks.length + data.todos.length + data.meetings.length +
@@ -34,6 +36,27 @@ export default function SettingsPage() {
     a.download = "fokus-data.json";
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+
+  function importJson(file: File) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed: unknown = JSON.parse(String(reader.result));
+        if (!parsed || typeof parsed !== "object") throw new Error("Format tidak valid");
+        const candidate = parsed as Partial<AppData>;
+        const collections = ["tasks", "todos", "meetings", "playlists", "music"] as const;
+        if (collections.some((key) => !Array.isArray(candidate[key]))) {
+          throw new Error("Koleksi data tidak lengkap");
+        }
+        replaceData(candidate as AppData);
+        toast("Data berhasil dipulihkan");
+      } catch {
+        toast("File JSON tidak valid");
+      }
+    };
+    reader.onerror = () => toast("File JSON tidak dapat dibaca");
+    reader.readAsText(file);
   }
 
   function savePrimaryColor() {
@@ -104,6 +127,20 @@ export default function SettingsPage() {
           <div style={{ display: "flex", gap: 9, flexWrap: "wrap" }}>
             <button type="button" className="btn" onClick={exportJson}>
               Unduh salinan JSON
+            </button>
+            <input
+              ref={importInput}
+              type="file"
+              accept="application/json,.json"
+              hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) importJson(file);
+                e.target.value = "";
+              }}
+            />
+            <button type="button" className="btn" onClick={() => importInput.current?.click()}>
+              Pulihkan dari JSON
             </button>
             <button
               type="button"
